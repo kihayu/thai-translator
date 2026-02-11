@@ -135,7 +135,18 @@ async function callOpenAI(text) {
     
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
+        const errorMessage = errorData.error?.message;
+        
+        // Provide user-friendly error messages based on status code
+        if (response.status === 401) {
+            throw new Error('Invalid API key. Please check your OpenAI API key in settings.');
+        } else if (response.status === 429) {
+            throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+        } else if (response.status >= 500) {
+            throw new Error('OpenAI service is temporarily unavailable. Please try again later.');
+        } else {
+            throw new Error(errorMessage || `API request failed with status ${response.status}`);
+        }
     }
     
     const data = await response.json();
@@ -171,6 +182,12 @@ function saveApiKey() {
     
     if (!key.startsWith('sk-')) {
         showStatus('Invalid API key format. OpenAI keys start with "sk-".', 'error');
+        return;
+    }
+    
+    // Additional validation: OpenAI API keys typically have a minimum length
+    if (key.length < 40) {
+        showStatus('API key appears too short. Please check and try again.', 'error');
         return;
     }
     

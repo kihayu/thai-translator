@@ -15,12 +15,18 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache.map(url => new Request(url, { cache: 'reload' })))
-          .catch(err => {
-            console.log('Cache addAll error:', err);
-            // Even if some resources fail, we want to install
-            return Promise.resolve();
-          });
+        // Cache critical resources individually to identify failures
+        return Promise.allSettled(
+          urlsToCache.map(url => 
+            cache.add(new Request(url, { cache: 'reload' }))
+              .catch(err => console.warn(`Failed to cache ${url}:`, err))
+          )
+        ).then(results => {
+          const failures = results.filter(r => r.status === 'rejected');
+          if (failures.length > 0) {
+            console.warn(`${failures.length} resources failed to cache`);
+          }
+        });
       })
   );
   self.skipWaiting();
