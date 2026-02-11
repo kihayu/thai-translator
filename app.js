@@ -155,7 +155,7 @@ async function callOpenAI(text) {
     const data = await response.json();
     
     // Validate response structure
-    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+    if (!data.choices?.[0]?.message?.content) {
         throw new Error('Unexpected API response format. Please try again.');
     }
     
