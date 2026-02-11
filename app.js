@@ -15,6 +15,9 @@ if ('serviceWorker' in navigator) {
 let currentDirection = 'en-th'; // 'en-th' or 'th-en'
 let apiKey = localStorage.getItem('openai_api_key') || '';
 
+// Constants
+const MIN_API_KEY_LENGTH = 40;
+
 // DOM Elements
 const enToThBtn = document.getElementById('enToTh');
 const thToEnBtn = document.getElementById('thToEn');
@@ -186,7 +189,7 @@ function saveApiKey() {
     }
     
     // Additional validation: OpenAI API keys typically have a minimum length
-    if (key.length < 40) {
+    if (key.length < MIN_API_KEY_LENGTH) {
         showStatus('API key appears too short. Please check and try again.', 'error');
         return;
     }

@@ -335,6 +335,6 @@ footer {
 @media (pointer: coarse) {
     button,
     .lang-btn {
-        min-height: 44px;
+        min-height: 48px;
     }
 }
