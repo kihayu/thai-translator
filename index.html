@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Translate text between English and Thai using GPT">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Thai Translator</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇹🇭 Thai Translator</h1>
+            <p class="subtitle">Powered by GPT</p>
+        </header>
+
+        <main>
+            <div class="translator-card">
+                <!-- Language Direction Selector -->
+                <div class="language-selector">
+                    <button class="lang-btn active" id="enToTh">
+                        English → Thai
+                    </button>
+                    <button class="lang-btn" id="thToEn">
+                        Thai → English
+                    </button>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-section">
+                    <label for="inputText" class="label" id="inputLabel">Enter English text:</label>
+                    <textarea 
+                        id="inputText" 
+                        placeholder="Type or paste text here..."
+                        rows="6"
+                    ></textarea>
+                </div>
+
+                <!-- Translate Button -->
+                <button id="translateBtn" class="translate-btn">
+                    <span class="btn-text">Translate</span>
+                    <span class="spinner" id="spinner"></span>
+                </button>
+
+                <!-- Output Area -->
+                <div class="output-section" id="outputSection">
+                    <label class="label" id="outputLabel">Translation:</label>
+                    <div id="outputText" class="output-text"></div>
+                    <button id="copyBtn" class="copy-btn" style="display: none;">
+                        📋 Copy
+                    </button>
+                </div>
+
+                <!-- API Key Setup -->
+                <div class="api-setup" id="apiSetup">
+                    <details>
+                        <summary>⚙️ API Settings</summary>
+                        <div class="api-content">
+                            <label for="apiKey" class="label">OpenAI API Key:</label>
+                            <input 
+                                type="password" 
+                                id="apiKey" 
+                                placeholder="sk-..."
+                                value=""
+                            >
+                            <button id="saveApiKey" class="save-btn">Save Key</button>
+                            <p class="api-note">Your API key is stored locally in your browser and never sent to any server except OpenAI.</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="statusMsg" class="status-msg"></div>
+        </main>
+
+        <footer>
+            <p>Install this app on your phone for quick access!</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

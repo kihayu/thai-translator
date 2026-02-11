@@ -1,0 +1,96 @@
+const CACHE_NAME = 'thai-translator-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/app.js',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
+];
+
+// Install Service Worker
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        // Cache critical resources individually to identify failures
+        return Promise.allSettled(
+          urlsToCache.map(url => 
+            cache.add(new Request(url, { cache: 'reload' }))
+              .catch(err => console.warn(`Failed to cache ${url}:`, err))
+          )
+        ).then(results => {
+          const failures = results.filter(r => r.status === 'rejected');
+          if (failures.length > 0) {
+            console.warn(`${failures.length} resources failed to cache`);
+          }
+        });
+      })
+  );
+  self.skipWaiting();
+});
+
+// Fetch from cache
+self.addEventListener('fetch', event => {
+  // Skip OpenAI API requests from caching - use proper URL parsing for security
+  try {
+    const url = new URL(event.request.url);
+    if (url.hostname === 'api.openai.com') {
+      return;
+    }
+  } catch (e) {
+    // Invalid URL, let it pass through to normal fetch
+  }
+
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+
+        return fetch(event.request).then(
+          response => {
+            // Check if valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Clone the response
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          }
+        );
+      })
+      .catch(() => {
+        // Return a custom offline page if available
+        return caches.match('/index.html');
+      })
+  );
+});
+
+// Activate Service Worker and clean up old caches
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (!cacheWhitelist.includes(cacheName)) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
