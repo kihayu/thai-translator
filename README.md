@@ -83,7 +83,7 @@ Your API key is stored securely in your browser's local storage and is never sen
 ## Technologies Used
 
 - HTML5, CSS3, JavaScript (Vanilla)
-- OpenAI GPT-3.5-turbo API
+- OpenAI GPT-4o API
 - Service Workers for PWA functionality
 - Local Storage for API key management
 
