@@ -126,7 +126,7 @@ async function callOpenAI(text) {
             'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'gpt-5.2',
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: text }
