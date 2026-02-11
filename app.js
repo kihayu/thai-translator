@@ -126,13 +126,13 @@ async function callOpenAI(text) {
             'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-            model: 'gpt-5.2',
+            model: 'gpt-4o',
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: text }
             ],
             temperature: 0.3,
-            max_tokens: 1000
+            max_completion_tokens: 1000
         })
     });
     
@@ -153,6 +153,12 @@ async function callOpenAI(text) {
     }
     
     const data = await response.json();
+    
+    // Validate response structure
+    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        throw new Error('Unexpected API response format. Please try again.');
+    }
+    
     return data.choices[0].message.content.trim();
 }
 
