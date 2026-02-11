@@ -132,7 +132,7 @@ async function callOpenAI(text) {
                 { role: 'user', content: text }
             ],
             temperature: 0.3,
-            max_tokens: 1000
+            max_completion_tokens: 1000
         })
     });
     
@@ -153,6 +153,12 @@ async function callOpenAI(text) {
     }
     
     const data = await response.json();
+    
+    // Validate response structure
+    if (!data.choices?.[0]?.message?.content) {
+        throw new Error('Unexpected API response format. Please try again.');
+    }
+    
     return data.choices[0].message.content.trim();
 }
 
