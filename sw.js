@@ -34,9 +34,14 @@ self.addEventListener('install', event => {
 
 // Fetch from cache
 self.addEventListener('fetch', event => {
-  // Skip OpenAI API requests from caching
-  if (event.request.url.includes('api.openai.com')) {
-    return;
+  // Skip OpenAI API requests from caching - use proper URL parsing for security
+  try {
+    const url = new URL(event.request.url);
+    if (url.hostname === 'api.openai.com') {
+      return;
+    }
+  } catch (e) {
+    // Invalid URL, let it pass through to normal fetch
   }
 
   event.respondWith(
