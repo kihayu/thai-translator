@@ -14,70 +14,120 @@ if ('serviceWorker' in navigator) {
 // App State
 let currentDirection = 'en-th'; // 'en-th' or 'th-en'
 let apiKey = localStorage.getItem('openai_api_key') || '';
+let darkMode = localStorage.getItem('dark_mode') === 'true';
 
 // Constants
 const MIN_API_KEY_LENGTH = 40;
+const MAX_CHAR_COUNT = 5000;
 
 // DOM Elements
-const enToThBtn = document.getElementById('enToTh');
-const thToEnBtn = document.getElementById('thToEn');
 const inputText = document.getElementById('inputText');
 const outputText = document.getElementById('outputText');
 const translateBtn = document.getElementById('translateBtn');
 const copyBtn = document.getElementById('copyBtn');
+const clearBtn = document.getElementById('clearBtn');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
 const apiKeyInput = document.getElementById('apiKey');
 const saveApiKeyBtn = document.getElementById('saveApiKey');
 const statusMsg = document.getElementById('statusMsg');
-const inputLabel = document.getElementById('inputLabel');
-const outputLabel = document.getElementById('outputLabel');
+const swapBtn = document.getElementById('swapBtn');
+const sourceLangText = document.getElementById('sourceLangText');
+const targetLangText = document.getElementById('targetLangText');
+const charCount = document.getElementById('charCount');
+const loadingIndicator = document.getElementById('loadingIndicator');
+const themeToggle = document.getElementById('themeToggle');
+const fullscreenView = document.getElementById('fullscreenView');
+const fullscreenText = document.getElementById('fullscreenText');
+const exitFullscreen = document.getElementById('exitFullscreen');
 
 // Initialize
 apiKeyInput.value = apiKey;
+updateLanguageLabels();
+updateCharCount();
+
+// Apply saved theme
+if (darkMode) {
+    document.body.classList.add('dark-mode');
+}
 
 // Event Listeners
-enToThBtn.addEventListener('click', () => {
-    setDirection('en-th');
-});
-
-thToEnBtn.addEventListener('click', () => {
-    setDirection('th-en');
-});
-
+swapBtn.addEventListener('click', swapLanguages);
 translateBtn.addEventListener('click', translateText);
-
 copyBtn.addEventListener('click', copyToClipboard);
-
+clearBtn.addEventListener('click', clearInput);
+fullscreenBtn.addEventListener('click', enterFullscreen);
+exitFullscreen.addEventListener('click', exitFullscreenMode);
 saveApiKeyBtn.addEventListener('click', saveApiKey);
+themeToggle.addEventListener('click', toggleTheme);
+
+// Character count
+inputText.addEventListener('input', () => {
+    updateCharCount();
+    // Clear output when input changes
+    outputText.textContent = '';
+    copyBtn.style.display = 'none';
+    fullscreenBtn.style.display = 'none';
+});
 
 // Allow Enter key to trigger translation (with Shift+Enter for new line)
 inputText.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && e.ctrlKey) {
         e.preventDefault();
         translateText();
     }
 });
 
 // Functions
-function setDirection(direction) {
-    currentDirection = direction;
-    
-    if (direction === 'en-th') {
-        enToThBtn.classList.add('active');
-        thToEnBtn.classList.remove('active');
-        inputLabel.textContent = 'Enter English text:';
-        outputLabel.textContent = 'Thai Translation:';
-        inputText.placeholder = 'Type or paste English text here...';
+function updateLanguageLabels() {
+    if (currentDirection === 'en-th') {
+        sourceLangText.textContent = 'English';
+        targetLangText.textContent = 'Thai';
+        inputText.placeholder = 'Enter text';
     } else {
-        thToEnBtn.classList.add('active');
-        enToThBtn.classList.remove('active');
-        inputLabel.textContent = 'Enter Thai text:';
-        outputLabel.textContent = 'English Translation:';
-        inputText.placeholder = 'พิมพ์หรือวางข้อความภาษาไทยที่นี่...';
+        sourceLangText.textContent = 'Thai';
+        targetLangText.textContent = 'English';
+        inputText.placeholder = 'ป้อนข้อความ';
     }
+}
+
+function swapLanguages() {
+    currentDirection = currentDirection === 'en-th' ? 'th-en' : 'en-th';
+    updateLanguageLabels();
     
-    // Clear previous translation
+    // Swap input and output
+    const inputValue = inputText.value;
+    const outputValue = outputText.textContent;
+    inputText.value = outputValue;
+    outputText.textContent = inputValue;
+    
+    // Update UI
+    updateCharCount();
+    if (outputValue) {
+        copyBtn.style.display = 'block';
+        fullscreenBtn.style.display = 'block';
+    } else {
+        copyBtn.style.display = 'none';
+        fullscreenBtn.style.display = 'none';
+    }
+}
+
+function updateCharCount() {
+    const count = inputText.value.length;
+    charCount.textContent = `${count} / ${MAX_CHAR_COUNT}`;
+    
+    if (count > MAX_CHAR_COUNT) {
+        charCount.style.color = 'var(--error-color)';
+    } else {
+        charCount.style.color = 'var(--text-secondary)';
+    }
+}
+
+function clearInput() {
+    inputText.value = '';
+    updateCharCount();
     outputText.textContent = '';
     copyBtn.style.display = 'none';
+    fullscreenBtn.style.display = 'none';
 }
 
 async function translateText() {
@@ -88,6 +138,11 @@ async function translateText() {
         return;
     }
     
+    if (text.length > MAX_CHAR_COUNT) {
+        showStatus(`Text is too long. Maximum ${MAX_CHAR_COUNT} characters allowed.`, 'error');
+        return;
+    }
+    
     if (!apiKey) {
         showStatus('Please set your OpenAI API key in the settings below.', 'error');
         return;
@@ -95,14 +150,16 @@ async function translateText() {
     
     // Show loading state
     translateBtn.disabled = true;
-    translateBtn.classList.add('loading');
+    loadingIndicator.classList.add('active');
     outputText.textContent = '';
     copyBtn.style.display = 'none';
+    fullscreenBtn.style.display = 'none';
     
     try {
         const translation = await callOpenAI(text);
         outputText.textContent = translation;
         copyBtn.style.display = 'block';
+        fullscreenBtn.style.display = 'block';
         showStatus('Translation completed successfully!', 'success', 2000);
     } catch (error) {
         console.error('Translation error:', error);
@@ -110,7 +167,7 @@ async function translateText() {
         outputText.textContent = '';
     } finally {
         translateBtn.disabled = false;
-        translateBtn.classList.remove('loading');
+        loadingIndicator.classList.remove('active');
     }
 }
 
@@ -170,15 +227,49 @@ function copyToClipboard() {
     navigator.clipboard.writeText(text)
         .then(() => {
             showStatus('Copied to clipboard!', 'success', 2000);
-            copyBtn.textContent = '✓ Copied';
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>`;
             setTimeout(() => {
-                copyBtn.textContent = '📋 Copy';
+                copyBtn.innerHTML = originalHTML;
             }, 2000);
         })
         .catch(error => {
             console.error('Copy failed:', error);
             showStatus('Failed to copy to clipboard.', 'error');
         });
+}
+
+function enterFullscreen() {
+    const text = outputText.textContent;
+    if (!text) return;
+    
+    fullscreenText.textContent = text;
+    fullscreenView.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function exitFullscreenMode() {
+    fullscreenView.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Close fullscreen on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && fullscreenView.classList.contains('active')) {
+        exitFullscreenMode();
+    }
+});
+
+function toggleTheme() {
+    darkMode = !darkMode;
+    if (darkMode) {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+    localStorage.setItem('dark_mode', darkMode);
 }
 
 function saveApiKey() {
