@@ -14,11 +14,20 @@ if ('serviceWorker' in navigator) {
 // App State
 let currentDirection = 'en-th'; // 'en-th' or 'th-en'
 let apiKey = localStorage.getItem('openai_api_key') || '';
-let darkMode = localStorage.getItem('dark_mode') === 'true';
+// Initialize dark mode from localStorage or system preference
+let darkMode = localStorage.getItem('dark_mode') === 'true' || 
+    (localStorage.getItem('dark_mode') === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
 // Constants
 const MIN_API_KEY_LENGTH = 40;
 const MAX_CHAR_COUNT = 5000;
+const COPY_SUCCESS_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polyline points="20 6 9 17 4 12"/>
+</svg>`;
+const COPY_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+</svg>`;
 
 // DOM Elements
 const inputText = document.getElementById('inputText');
@@ -69,9 +78,9 @@ inputText.addEventListener('input', () => {
     fullscreenBtn.style.display = 'none';
 });
 
-// Allow Enter key to trigger translation (with Shift+Enter for new line)
+// Allow Ctrl+Enter to trigger translation (Enter alone adds new line)
 inputText.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && e.ctrlKey) {
+    if (e.key === 'Enter' && e.ctrlKey) {
         e.preventDefault();
         translateText();
     }
@@ -227,12 +236,9 @@ function copyToClipboard() {
     navigator.clipboard.writeText(text)
         .then(() => {
             showStatus('Copied to clipboard!', 'success', 2000);
-            const originalHTML = copyBtn.innerHTML;
-            copyBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-            </svg>`;
+            copyBtn.innerHTML = COPY_SUCCESS_ICON;
             setTimeout(() => {
-                copyBtn.innerHTML = originalHTML;
+                copyBtn.innerHTML = COPY_ICON;
             }, 2000);
         })
         .catch(error => {
